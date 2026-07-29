@@ -2,8 +2,8 @@ name: Saham
 
 on:
   schedule:
-    # هر 4 ساعت یکبار (روزانه 6 مرتبه)
-    - cron: '0 13 * * *'
+    
+    - cron: '0 16 * * *'
 
   workflow_dispatch:
 
