@@ -4,6 +4,7 @@ from datetime import datetime
 import time
 from pathlib import Path
 import requests
+import random
 
 URL = "https://www.sahamyab.com/guest/twiter/list?v=0.1"
 
@@ -41,7 +42,7 @@ def fetch_all():
 
         id = items[9]["id"]
         page += 1
-        time.sleep(30)
+        time.sleep(random.randint(5, 30))
 
     return tweets
 
