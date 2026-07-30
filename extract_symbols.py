@@ -22,13 +22,7 @@ def load_symbols():
 def save_symbols(db):
 
     with open(SYMBOL_FILE, "w", encoding="utf-8") as f:
-        json.dump(
-            db,
-            f,
-            ensure_ascii=False,
-            indent=2,
-            sort_keys=True
-        )
+        json.dump(db, f, ensure_ascii=False, indent=2, sort_keys=True)
 
 
 def process_file(path, db):
@@ -38,33 +32,31 @@ def process_file(path, db):
     with open(path, "r", encoding="utf-8") as f:
         for line in f:
 
-        line = line.strip()
+            line = line.strip()
 
-        if not line:
-            continue
-
-        tweet = json.loads(line)
-
-        text = tweet.get("content", "")
-        ##send_time = tweet["sendTime"][:10]
-        send_time = date.today().isoformat()
-
-        hashtags = HASHTAG_PATTERN.findall(text)
-
-        for symbol in hashtags:
-
-            symbol = symbol.strip()
-
-            if not symbol:
+            if not line:
                 continue
 
-            if symbol not in db:
+            tweet = json.loads(line)
 
-                db[symbol] = {
-                    "first_seen": send_time,
-                    "last_seen": send_time
-                }
-                
+            text = tweet.get("content", "")
+            ##send_time = tweet["sendTime"][:10]
+            send_time = date.today().isoformat()
+
+            hashtags = HASHTAG_PATTERN.findall(text)
+
+            for symbol in hashtags:
+
+                symbol = symbol.strip()
+
+                if not symbol:
+                    continue
+
+                if symbol not in db:
+
+                    db[symbol] = {"first_seen": send_time, "last_seen": send_time}
+
+
 def main():
 
     db = load_symbols()
