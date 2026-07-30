@@ -1,6 +1,7 @@
 import gzip
 import json
-from datetime import datetime
+from datetime import datetime,date,timedelta
+
 import time
 from pathlib import Path
 import requests
@@ -15,18 +16,20 @@ HEADERS = {
 }
 
 
-def fetch_all():
+def fetch_symbol(symbol):
     page = 0
     tweets = []
-    now = datetime.utcnow()
+    now = date.today()
     folder = Path("snapshots") / now.strftime("%Y") / now.strftime("%m")
     folder.mkdir(parents=True, exist_ok=True)
-    filename = folder / now.strftime("%Y%m%d.json")
+
+    filename = folder / f"{now.strftime('%Y%m%d')}_{symbol}.json"
+
     while page < 11:
         if page == 0:
-            payload = {"page": page}
+            payload = {"page": page, "tag": symbol}
         else:
-            payload = {"page": page, "id": id}
+            payload = {"page": page, "tag": symbol, "id": id}
 
         r = requests.post(URL, headers=HEADERS, json=payload, timeout=30)
 
@@ -44,7 +47,7 @@ def fetch_all():
         page += 1
         time.sleep(random.randint(5, 30))
 
-    return tweets
+    return 0
 
 
 def append_items(filename, items):
@@ -54,6 +57,30 @@ def append_items(filename, items):
             f.write("\n")
 
 
+def process_symbols():
+    SYMBOL_FILE = Path("symbols.json")
+    with open(SYMBOL_FILE, "r", encoding="utf-8") as f:
+        symbols = json.load(f)
+
+    today = date.today()
+    tomorrow = today + timedelta(days=1)
+
+    today_str = today.isoformat()
+    tomorrow_str = tomorrow.isoformat()
+
+    for symbol, info in symbols.items():
+
+        last_seen = info.get("last_seen", "1900-01-01")
+
+        if last_seen <= today_str:
+
+            fetch_symbol(symbol)
+
+            info["last_seen"] = tomorrow_str
+            with open(SYMBOL_FILE, "w", encoding="utf-8") as f:
+                json.dump(symbols, f, ensure_ascii=False, indent=2, sort_keys=True)
+
+
 if __name__ == "__main__":
 
-    tweets = fetch_all()
+    tweets = process_symbols()

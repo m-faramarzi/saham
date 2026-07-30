@@ -1,7 +1,7 @@
 import json
 import re
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime,date
 
 SNAPSHOT_DIR = Path("snapshots")
 SYMBOL_FILE = Path("symbols.json")
