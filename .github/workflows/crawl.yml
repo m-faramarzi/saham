@@ -26,13 +26,15 @@ jobs:
       - run: mkdir -p snapshots
 
       - run: python scrape.py
+      - run: python extract_symbols.py
 
       - name: Commit files
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
 
-          git add snapshots/*.json
+          
+          git add snapshots symbols.json
 
           git diff --cached --quiet || (
             git commit -m "Snapshot $(date -u '+%Y-%m-%d %H:%M')"
