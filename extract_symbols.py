@@ -36,19 +36,18 @@ def process_file(path, db):
     print(f"Reading {path}")
 
     with open(path, "r", encoding="utf-8") as f:
-        data = json.load(f)
+        for line in f:
 
-    if isinstance(data, dict):
-        data = [data]
+        line = line.strip()
 
-    for tweet in data:
+        if not line:
+            continue
+
+        tweet = json.loads(line)
 
         text = tweet.get("content", "")
-        ##send_time = tweet.get("sendTime", "")[:10]
+        ##send_time = tweet["sendTime"][:10]
         send_time = date.today().isoformat()
-
-        ##if not send_time:
-            ##continue
 
         hashtags = HASHTAG_PATTERN.findall(text)
 
@@ -64,8 +63,8 @@ def process_file(path, db):
                 db[symbol] = {
                     "first_seen": send_time,
                     "last_seen": send_time
-                }            
-
+                }
+                
 def main():
 
     db = load_symbols()
