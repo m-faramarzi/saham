@@ -44,10 +44,11 @@ def process_file(path, db):
     for tweet in data:
 
         text = tweet.get("content", "")
-        send_time = tweet.get("sendTime")
+        ##send_time = tweet.get("sendTime", "")[:10]
+        send_time = date.today().isoformat()
 
-        if not send_time:
-            continue
+        ##if not send_time:
+            ##continue
 
         hashtags = HASHTAG_PATTERN.findall(text)
 
@@ -63,16 +64,7 @@ def process_file(path, db):
                 db[symbol] = {
                     "first_seen": send_time,
                     "last_seen": send_time
-                }
-
-            else:
-
-                if send_time < db[symbol]["first_seen"]:
-                    db[symbol]["first_seen"] = send_time
-
-                if send_time > db[symbol]["last_seen"]:
-                    db[symbol]["last_seen"] = send_time
-
+                }            
 
 def main():
 
