@@ -24,8 +24,7 @@ jobs:
       - run: pip install -r requirements.txt
 
       - run: mkdir -p snapshots
-
-      - run: python scrape.py
+      
       - run: python extract_symbols.py
 
       - name: Commit files
