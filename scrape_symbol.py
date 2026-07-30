@@ -36,16 +36,20 @@ def fetch_symbol(symbol):
         r.raise_for_status()
 
         data = r.json()
-        items = data["items"]
-
+        items = data["items"]            
+        
+        if not data.get("hasMore", False):
+            return
+                
+        
         tweets.extend(items)
 
-        print(f"page={page}  tweets={len(items)}")
+        print(f"page={page}  symbol={symbol}  tweets={len(items)}")
         append_items(filename, items)
 
         id = items[-1]["id"]
         page += 1
-        time.sleep(random.randint(5, 30))
+        ##time.sleep(random.randint(5, 30))
 
     return 0
 
