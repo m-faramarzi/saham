@@ -35,7 +35,7 @@ jobs:
           git config user.email "github-actions@github.com"
 
           
-          git add snapshots symbols.json
+          git add snapshots news symbols.json
 
           git diff --cached --quiet || (
             git commit -m "Snapshot $(date -u '+%Y-%m-%d %H:%M')"
