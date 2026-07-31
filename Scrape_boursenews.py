@@ -12,7 +12,6 @@ HEADERS = {
     "User-Agent": "Mozilla/5.0"
 }
 
-
 def get_news_links(archive_url):
 
     r = requests.get(archive_url, headers=HEADERS, timeout=30)

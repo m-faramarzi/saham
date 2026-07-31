@@ -1,6 +1,6 @@
 import gzip
 import json
-from datetime import datetime,date,timedelta
+from datetime import datetime, date, timedelta
 
 import time
 from pathlib import Path
@@ -20,7 +20,9 @@ def fetch_symbol(symbol):
     page = 0
     tweets = []
     now = date.today()
-    folder = Path("snapshots") / now.strftime("%Y") / now.strftime("%m")
+    folder = (
+        Path("snapshots") / now.strftime("%Y") / now.strftime("%m") / now.strftime("%d")
+    )
     folder.mkdir(parents=True, exist_ok=True)
 
     filename = folder / f"{now.strftime('%Y%m%d')}_{symbol}.json"
@@ -36,12 +38,11 @@ def fetch_symbol(symbol):
         r.raise_for_status()
 
         data = r.json()
-        items = data["items"]            
-        
+        items = data["items"]
+
         if not data.get("hasMore", False):
             return
-                
-        
+
         tweets.extend(items)
 
         print(f"page={page}  symbol={symbol}  tweets={len(items)}")
@@ -49,7 +50,7 @@ def fetch_symbol(symbol):
 
         id = items[-1]["id"]
         page += 1
-        ##time.sleep(random.randint(5, 30))
+        time.sleep(random.randint(1, 3))
 
     return 0
 
