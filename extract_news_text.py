@@ -6,12 +6,12 @@ from bs4 import BeautifulSoup
 HEADERS = {"User-Agent": "Mozilla/5.0"}
 
 MONTHS = {
-    "فروردین": 1,
-    "اردیبهشت": 2,
+    "فروردين": 1,
+    "ارديبهشت": 2,
     "خرداد": 3,
-    "تیر": 4,
+    "تير": 4,
     "مرداد": 5,
-    "شهریور": 6,
+    "شهريور": 6,
     "مهر": 7,
     "آبان": 8,
     "آذر": 9,
@@ -82,6 +82,7 @@ def parse_boursenews_text(url):
 
     if tag:
         category = tag.get_text(strip=True)
+        category = category.replace("\u200c", "").replace("\u200f", "").strip()
 
     # ---------------- type ----------------
 
@@ -138,6 +139,8 @@ def parse_boursenews_text(url):
         paragraphs.append(txt)
 
     text = "\n\n".join(paragraphs)
+    if text.startswith("بورس نیوز:"):
+        text = text[len("بورس نیوز:") :].strip()
 
     return {
         "id": news_id,
@@ -145,7 +148,7 @@ def parse_boursenews_text(url):
         "category": category,
         "type": news_type,
         "publish_date_jalali": jalali_date,
-        "publish_date": gregorian_date,
+        "publish_date_gregorian": gregorian_date,
         "url": short_url,
         "text": text,
     }

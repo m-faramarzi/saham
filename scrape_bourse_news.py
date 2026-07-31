@@ -11,14 +11,20 @@ BASE_URL = "https://www.boursenews.ir"
 
 HEADERS = {"User-Agent": "Mozilla/5.0"}
 
+SAVED_IDS= set()
+
 
 def get_news_links(html):
 
     soup = BeautifulSoup(html, "html.parser")
 
     links = []
-
-    for item in soup.select("div.linearNewsItem"):
+    items = soup.select_one("div.archive_content")
+    
+    if items is None:
+        raise "no archive" 
+    
+    for item in items.select("div.linearNewsItem"):
 
         a = item.select_one("a.linNewsLink")
 
@@ -44,18 +50,23 @@ def get_news_links(html):
 
 
 # -----------------------------
-# append jsonl
+# append json
 # -----------------------------
 def append_json(item):
-    filename = f"news/{datetime.now():%Y%m%d}_{item["category"]}.json"
+    if item["id"] not in SAVED_IDS:
+    
+        filename = f"news/{datetime.now():%Y%m%d}_{item["category"]}.json"
 
-    Path(filename).parent.mkdir(parents=True, exist_ok=True)
+        Path(filename).parent.mkdir(parents=True, exist_ok=True)
 
-    with open(filename, "a", encoding="utf-8") as f:
+        with open(filename, "a", encoding="utf-8") as f:
 
-        json.dump(item, f, ensure_ascii=False)
+            json.dump(item, f, ensure_ascii=False)
 
-        f.write("\n")
+            f.write("\n")
+        SAVED_IDS.add(item["id"])
+    else:
+        print(item["id"]+ "----"+item["title"]+" IS DUPLICATED")
 
 
 # -----------------------------
@@ -66,12 +77,11 @@ def crawl_archive(archive_url):
     r = requests.get(archive_url, headers=HEADERS)
 
     links = get_news_links(r.text)
-
+    if links is None:
+        return 0
     for link in links:
 
-        try:
-
-            print(link)
+        try:            
 
             news = parse_boursenews_text(link["url"])
 
@@ -80,18 +90,21 @@ def crawl_archive(archive_url):
         except Exception as e:
 
             print(e)
+    return len(links)
 
 
 if __name__ == "__main__":
 
-    archives = [
-        "https://www.boursenews.ir/fa/archive?service_id=1&sec_id=-1&cat_id=-1&rpp=100",
-        "https://www.boursenews.ir/fa/archive?service_id=14&sec_id=-1&cat_id=-1&rpp=100",
-        "https://www.boursenews.ir/fa/archive?service_id=3&sec_id=-1&cat_id=-1&rpp=100",
-        "https://www.boursenews.ir/fa/archive?service_id=4&sec_id=-1&cat_id=-1&rpp=100",
+    archives = [    
+        "https://www.boursenews.ir/fa/archive?service_id=1&sec_id=-1&cat_id=-1&rpp=100&from_date=1401/01/01&to_date=1401/12/29",
+        "https://www.boursenews.ir/fa/archive?service_id=14&sec_id=-1&cat_id=-1&rpp=100&from_date=1401/01/01&to_date=1401/12/29",
+        "https://www.boursenews.ir/fa/archive?service_id=3&sec_id=-1&cat_id=-1&rpp=100&from_date=1401/01/01&to_date=1401/12/29",
+        "https://www.boursenews.ir/fa/archive?service_id=4&sec_id=-1&cat_id=-1&rpp=100&from_date=1401/01/01&to_date=1401/12/29",
     ]
 
     for arch in archives:
         for page in range(100):
             url = f"{arch}" + f"&p={page+1}"
-            crawl_archive(url)
+            record_count =crawl_archive(url)
+            if record_count == 0:
+                break
