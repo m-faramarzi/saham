@@ -25,7 +25,7 @@ jobs:
 
       - run: mkdir -p snapshots
             
-      - run: python extract_symbols.py
+      ##- run: python extract_symbols.py
       - run: python scrape_symbol.py
       
       - name: Commit files
