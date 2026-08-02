@@ -72,13 +72,14 @@ def process_symbols():
 
     today_str = today.isoformat()
     tomorrow_str = tomorrow.isoformat()
-    
+    CC = 1
     for symbol, info in symbols.items():
-        
+        if CC > 50
+            RETURN
         last_seen = info.get("last_seen", "1900-01-01")
-
+        
         if last_seen <= today_str:
-            
+            CC = CC + 1
             fetch_symbol(symbol)
 
             info["last_seen"] = tomorrow_str
