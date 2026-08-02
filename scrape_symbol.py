@@ -92,7 +92,7 @@ def process_symbols():
 
 
 if __name__ == "__main__":
-     try:
+    try:
         process_symbols()
     except Exception:
         traceback.print_exc()
