@@ -88,5 +88,8 @@ def process_symbols():
 
 
 if __name__ == "__main__":
-
-    process_symbols()
+     try:
+        process_symbols()
+    except Exception:
+        traceback.print_exc()
+        raise   
