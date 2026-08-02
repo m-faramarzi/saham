@@ -74,8 +74,8 @@ def process_symbols():
     tomorrow_str = tomorrow.isoformat()
     CC = 1
     for symbol, info in symbols.items():
-        if CC > 50
-            RETURN
+        if CC > 50:
+            return
         last_seen = info.get("last_seen", "1900-01-01")
         
         if last_seen <= today_str:
