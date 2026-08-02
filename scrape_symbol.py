@@ -27,12 +27,12 @@ def fetch_symbol(symbol):
     folder.mkdir(parents=True, exist_ok=True)
 
     filename = folder / f"{now.strftime('%Y%m%d')}_{symbol}.json"
-
+    last_id = None
     while page < 11:
         if page == 0:
             payload = {"page": page, "tag": symbol}
         else:
-            payload = {"page": page, "tag": symbol, "id": id}
+            payload = {"page": page, "tag": symbol, "id": last_id}
 
         r = requests.post(URL, headers=HEADERS, json=payload, timeout=30)
 
@@ -49,7 +49,7 @@ def fetch_symbol(symbol):
         print(f"page={page}  symbol={symbol}  tweets={len(items)}")
         append_items(filename, items)
 
-        id = items[-1]["id"]
+        last_id = items[-1]["id"]
         page += 1
         time.sleep(random.randint(1, 3))
 
