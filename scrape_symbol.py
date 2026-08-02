@@ -49,6 +49,9 @@ def fetch_symbol(symbol):
         print(f"page={page}  symbol={symbol}  tweets={len(items)}")
         append_items(filename, items)
 
+        if not items
+            return
+        
         last_id = items[-1]["id"]
         page += 1
         time.sleep(random.randint(1, 3))
