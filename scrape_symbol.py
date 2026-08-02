@@ -6,6 +6,7 @@ import time
 from pathlib import Path
 import requests
 import random
+import traceback
 
 URL = "https://www.sahamyab.com/guest/twiter/list?v=0.1"
 
