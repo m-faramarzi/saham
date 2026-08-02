@@ -24,11 +24,23 @@ jobs:
       - run: pip install -r requirements.txt
 
       - run: mkdir -p snapshots
-            
+      - name: Debug
+        run: |
+          pwd
+          ls -la
+          python --version
+
+      - name: Run scraper
+        run: |
+          python -u scrape_symbol.py
+          continue-on-error: true
+
+      - name: Show exit code
+        run: echo "Python finished"      
       ##- run: python extract_symbols.py
       ##- run: python scrape_symbol.py
-      - name: Run scraper
-        run:  python -u scrape_symbol.py
+      ##- name: Run scraper
+      ##  run:  python -u scrape_symbol.py
       
       - name: Commit files
         run: |
