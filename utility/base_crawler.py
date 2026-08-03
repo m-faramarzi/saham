@@ -6,44 +6,50 @@ from pathlib import Path
 
 
 class BaseCrawler(ABC):
-    saved_ids: set[str]
+    #saved_ids: set[str]
+    HEADERS = {"User-Agent": "Mozilla/5.0"}
 
     def __init__(self):
-        self.news_list: list[NewsItem] = []
-        # self.saved_ids= set()
+        ##self.news_list: list[NewsItem] = []        
+        self.saved_ids: set[str] = set()
+        
 
     @abstractmethod
-    def extract_links(self, url: str) -> list[str]:
+    def extract_links(self, url: str) -> list[NewsItem]:
+        pass
+    
+    @abstractmethod
+    def scrape_page(self, news_item:NewsItem) -> NewsItem:        
         pass
 
     def append_json_file(self, news_list: list[NewsItem]):
+        today = f"{datetime.now():%Y%m%d}"
         for item in news_list:
             if item.id not in self.saved_ids:
 
                 filename = (
-                    f"news/{item.source}/{datetime.now():%Y%m%d}_{item.category}.json"
+                    f"news/{item.source}/{today}_{item.category}.json"
                 )
 
                 Path(filename).parent.mkdir(parents=True, exist_ok=True)
 
                 with open(filename, "a", encoding="utf-8") as f:
                     json.dump(item, f, ensure_ascii=False)
+                    json.dump(item.model_dump(), f, ensure_ascii=False)
                     f.write("\n")
                     self.saved_ids.add(item.id)
             else:
                 print(item.id + "----" + item.title + " IS DUPLICATED")
 
     def crawl(self, url: str) -> list[NewsItem]:
-        links = self.extract_links(url)
+        newslinks = self.extract_links(url)
+        news_list: list[NewsItem] = []
+        for link in newslinks:
+            try:
+                news = self.scrape_page(link)
+                news_list.append(news)
+            except Exception as ex:
+                print(ex)
+        return news_list
 
-        for link in links:
-            news = self.scrape_page(link)
-            self.news_list.append(news)
-        return self.news_list
-
-    @abstractmethod
-    def scrape_page(self, page_url: str) -> NewsItem:
-        """
-        Extract one news page and return NewsItem
-        """
-        pass
+    
