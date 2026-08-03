@@ -4,16 +4,13 @@ from model.news_item import NewsItem
 from datetime import datetime
 from pathlib import Path
 
-
 class BaseCrawler(ABC):
-    #saved_ids: set[str]
+    
     HEADERS = {"User-Agent": "Mozilla/5.0"}
 
     def __init__(self):
-        ##self.news_list: list[NewsItem] = []        
         self.saved_ids: set[str] = set()
         
-
     @abstractmethod
     def extract_links(self, url: str) -> list[NewsItem]:
         pass
@@ -51,5 +48,3 @@ class BaseCrawler(ABC):
             except Exception as ex:
                 print(ex)
         return news_list
-
-    

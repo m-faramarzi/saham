@@ -8,8 +8,8 @@ from utility.jalali_date_parser import JalaliDateParser
 
 
 class BourseNewsCrawler(BaseCrawler):
-    base_url = "https://www.boursenews.ir"
-    source :str = 'boursenews'
+    BASE_URL = "https://www.boursenews.ir"
+    SOURCE :str = 'boursenews'
    
     
     def extract_links(self, url: str) -> list[NewsItem]:
@@ -37,18 +37,15 @@ class BourseNewsCrawler(BaseCrawler):
         
             title = a.select_one("h4.linearNewsTxt")
             news = NewsItem(
-                source=self.source,
+                source=self.SOURCE,
                 id=href.split("/")[3],
                 title=title.get_text(strip=True) if title else "",
-                news_url=urljoin(self.base_url, href)
+                news_url=urljoin(self.BASE_URL, href)
             )
             newslinks.append(news)
         
         return newslinks
-        
-        
-    
-    
+            
     def scrape_page(self, news_item:NewsItem) -> NewsItem:                
 
         req = requests.get(news_item.news_url, headers=self.HEADERS, timeout=30)
