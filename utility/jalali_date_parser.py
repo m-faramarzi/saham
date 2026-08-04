@@ -30,14 +30,11 @@ class JalaliDateParser:
         if text is None:
             return ""
 
-        table = str.maketrans(
-            "۰۱۲۳۴۵۶۷۸۹كيى",
-            "0123456789کیی"
-        )
+        table = str.maketrans("۰۱۲۳۴۵۶۷۸۹كيى", "0123456789کیی")
 
         text = text.translate(table)
 
-        text = text.replace("‌", " ")   # نیم‌فاصله
+        text = text.replace("‌", " ")  # نیم‌فاصله
         text = text.replace("ـ", "")
         text = re.sub(r"\s+", " ", text)
 
@@ -59,6 +56,7 @@ class JalaliDateParser:
         regex = regex.replace("HH24", r"(?P<hour>\d{1,2})")
         regex = regex.replace("MI", r"(?P<minute>\d{1,2})")
         regex = regex.replace("SS", r"(?P<second>\d{1,2})")
+        regex = regex.replace("WEEKDAY", r"(?P<weekday>[^\d]+?)")
 
         return "^" + regex + "$"
 
@@ -85,8 +83,7 @@ class JalaliDateParser:
         second = int(g.get("second") or 0)
 
         jalali = (
-            f"{year:04d}-{month:02d}-{day:02d} "
-            f"{hour:02d}:{minute:02d}:{second:02d}"
+            f"{year:04d}-{month:02d}-{day:02d} " f"{hour:02d}:{minute:02d}:{second:02d}"
         )
 
         gregorian = jdatetime.datetime(

@@ -31,7 +31,7 @@ class BaseCrawler(ABC):
                 Path(filename).parent.mkdir(parents=True, exist_ok=True)
 
                 with open(filename, "a", encoding="utf-8") as f:
-                    json.dump(item, f, ensure_ascii=False)
+                    json.dump(item.model_dump(mode="json"), f, ensure_ascii=False)
                     json.dump(item.model_dump(), f, ensure_ascii=False)
                     f.write("\n")
                     self.saved_ids.add(item.id)
