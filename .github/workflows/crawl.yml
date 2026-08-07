@@ -1,44 +1,146 @@
-name: Saham
+name: Sahamyab v2
 
 on:
   schedule:
-    
-    - cron: '0 */1 * * *'
+    - cron: "0 * * * *"
 
   workflow_dispatch:
+    inputs:
+      limit:
+        description: "Number of prioritized hashtags (0 means all)"
+        required: false
+        default: "150"
 
 permissions:
   contents: write
+  actions: write
+
+concurrency:
+  group: sahamyab-v2-${{ github.ref }}
+  cancel-in-progress: false
+  queue: max
 
 jobs:
   crawl:
     runs-on: ubuntu-latest
+    env:
+      STATE_ARTIFACT_NAME: sahamyab-v2-state
+      DATABASE_PATH: sahamyab_v2/data/sahamyab.sqlite3
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+          cache: pip
+          cache-dependency-path: sahamyab_v2/requirements.txt
 
-      - run: pip install -r requirements.txt
+      - name: Install dependencies
+        run: python -m pip install -r sahamyab_v2/requirements.txt
 
-      - run: mkdir -p snapshots
-            
-      ##- run: python extract_symbols.py
-      - run: python scrape_symbol.py
-      ##- name: Run scraper
-      ##  run:  python -u scrape_symbol.py
-      
-      - name: Commit files
+      - name: Run tests
+        run: python -m unittest discover -s sahamyab_v2/tests -v
+
+      - name: Restore latest crawler database
+        id: restore-state
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
         run: |
+          set -euo pipefail
+          mkdir -p "$(dirname "$DATABASE_PATH")"
+
+          artifact_id="$(
+            gh api --method GET \
+              "repos/${GITHUB_REPOSITORY}/actions/artifacts?name=${STATE_ARTIFACT_NAME}&per_page=100" \
+              --jq '.artifacts | map(select(.expired == false)) | sort_by(.created_at) | last | .id // empty'
+          )"
+
+          if [[ -z "$artifact_id" ]]; then
+            echo "No previous state artifact was found."
+            echo "restored=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          curl --fail --location --silent --show-error \
+            --header "Authorization: Bearer ${GH_TOKEN}" \
+            --header "Accept: application/vnd.github+json" \
+            --header "X-GitHub-Api-Version: 2026-03-10" \
+            "${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/actions/artifacts/${artifact_id}/zip" \
+            --output "${RUNNER_TEMP}/sahamyab-state.zip"
+
+          unzip -q -o "${RUNNER_TEMP}/sahamyab-state.zip" \
+            -d "$GITHUB_WORKSPACE"
+          test -s "$DATABASE_PATH"
+          test -s symbols.json
+          echo "Restored artifact ${artifact_id}."
+          echo "restored=true" >> "$GITHUB_OUTPUT"
+
+      - name: Initialize database from legacy snapshots
+        if: steps.restore-state.outputs.restored != 'true'
+        run: python -m sahamyab_v2 import-legacy
+
+      - name: Crawl prioritized hashtags
+        env:
+          CRAWL_LIMIT: ${{ inputs.limit || '150' }}
+        run: |
+          python -m sahamyab_v2 crawl \
+            --limit "$CRAWL_LIMIT" \
+            --backoff-base 20 \
+            --backoff-max 300 \
+            --backoff-jitter 0.30
+
+      - name: Upload crawler database
+        id: upload-state
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.STATE_ARTIFACT_NAME }}
+          path: |
+            ${{ env.DATABASE_PATH }}
+            symbols.json
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 6
+
+      - name: Commit symbol state
+        shell: bash
+        run: |
+          set -euo pipefail
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
 
-          
-          git add snapshots news symbols.json
+          git add symbols.json
 
-          git diff --cached --quiet || (
-            git commit -m "Snapshot $(date -u '+%Y-%m-%d %H:%M')"
-            git push
+          if git diff --cached --quiet; then
+            echo "No symbol state changes to commit."
+            exit 0
+          fi
+
+          git commit -m "Sahamyab state $(date -u '+%Y-%m-%d %H:%M')"
+          git pull --rebase origin "$GITHUB_REF_NAME"
+          git push origin "HEAD:$GITHUB_REF_NAME"
+
+      - name: Delete superseded state artifacts
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NEW_ARTIFACT_ID: ${{ steps.upload-state.outputs.artifact-id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t artifact_ids < <(
+            gh api --method GET \
+              "repos/${GITHUB_REPOSITORY}/actions/artifacts?name=${STATE_ARTIFACT_NAME}&per_page=100" \
+              --jq '.artifacts | map(select(.expired == false)) | .[].id'
           )
+
+          for artifact_id in "${artifact_ids[@]}"; do
+            if [[ "$artifact_id" == "$NEW_ARTIFACT_ID" ]]; then
+              continue
+            fi
+            gh api --method DELETE \
+              "repos/${GITHUB_REPOSITORY}/actions/artifacts/${artifact_id}"
+          done
